@@ -73,6 +73,11 @@ const TransactionSchema = new mongoose.Schema(
         ref: "Category",
         required: true,
       },
+      speaker: {
+        type: mongoose.Types.ObjectId,
+        ref: 'Speaker',
+        required: true,
+      },
       
     },
     payment : {

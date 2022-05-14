@@ -1,8 +1,11 @@
 const Participant = require("./model");
 const Event = require("../events/model");
+const Transaction = require("../transactions/model");
+const Payment = require("../payments/model");
 const { StatusCodes } = require("http-status-codes");
 const CustomAPI = require("../../../errors");
 const { createTokenUser, createJWT } = require("../../../utils");
+const req = require("express/lib/request");
 
 const signup = async (req, res, next) => {
   try {
@@ -85,4 +88,92 @@ const detailPage = async (req, res, next) => {
   }
 };
 
-module.exports = { signup, signin, landingPage, detailPage };
+//start checking event
+const checkout = async (req, res, next) => {
+  try {
+    console.log("req.user >>");
+    console.log(req.user);
+    const { event: eventId, personalDetail, payment: paymentId } = req.body;
+
+    const checkingEvent = await Event.findOne({ _id: eventId });
+    if (!checkingEvent) {
+      throw new CustomAPI.NotFoundError("No Event with Id: " + eventId);
+    }
+
+    //checking stock ticket
+    if (checkingEvent.stock === 0) {
+      throw new CustomAPI.NotFoundError("Stock event tidak mencukupi");
+    } else {
+      checkingEvent.stock = checkingEvent.stock -= 1;
+      await checkingEvent.save();
+    }
+
+    const historyEvent = {
+      title: checkingEvent.title,
+      price: checkingEvent.price,
+      date: checkingEvent.date,
+      cover: checkingEvent.cover,
+      about: checkingEvent.about,
+      venueName: checkingEvent.venueName,
+      tagLine: checkingEvent.tagLine,
+      keyPoint: checkingEvent.keyPoint,
+      category: checkingEvent.category,
+      speaker: checkingEvent.speaker,
+    };
+
+    //end checking event
+
+    //start checking payment
+    const checkingPayment = await Payment.findOne({ _id: paymentId });
+
+    if (!checkingPayment) {
+      throw new CustomAPI.NotFoundError("No Payment with Id :" + paymentId);
+    }
+
+    const historyPayment = {
+      type: checkingPayment.type,
+      imageUrl: checkingPayment.imageUrl,
+    };
+    //end checking payment
+
+    // checkout
+    const result = new Transaction({
+      personalDetail: personalDetail,
+      event: eventId,
+      historyEvent: historyEvent,
+      payment: paymentId,
+      historyPayment: historyPayment,
+      participant: req.user.id,
+    });
+
+    await result.save();
+
+    res.status(StatusCodes.CREATED).json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const dashboard = async (req, res, next) => {
+  try {
+    const result = await Transaction.find({ participant: req.user.id });
+    if (!result) {
+      throw new CustomAPI.NotFoundError(
+        "No Participant with Id :" + req.user.id
+      );
+    }
+
+    res.status(StatusCodes.OK).json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  signup,
+  signin,
+  landingPage,
+  detailPage,
+  checkout,
+  dashboard,
+};
