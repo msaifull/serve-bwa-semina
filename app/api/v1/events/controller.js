@@ -52,7 +52,7 @@ const createEvent = async (req, res, next) => {
       category,
       speaker,
       stock,
-      status
+      status,
     } = req.body;
 
     const user = req.user.id;
@@ -107,7 +107,15 @@ const getOneEvent = async (req, res, next) => {
   try {
     const { id: eventId } = req.params;
 
-    const result = await Event.findOne({ _id: eventId });
+    const result = await Event.findOne({ _id: eventId })
+      .populate({
+        path: "category",
+        select: "_id name",
+      })
+      .populate({
+        path: "speaker",
+        select: "_id name role avatar",
+      });
 
     if (!result) {
       throw new CustomAPI.NotFoundError("No Event With id " + eventId);
@@ -206,11 +214,11 @@ const deleteEvent = async (req, res, next) => {
       throw new CustomAPI.NotFoundError("No Event with Id :" + eventId);
     }
 
-      let currentImage = `${config.rootPath}/public/uploads/${result.cover}`;
+    let currentImage = `${config.rootPath}/public/uploads/${result.cover}`;
 
-      if (fs.existsSync(currentImage)) {
-        fs.unlinkSync(currentImage);
-      }
+    if (fs.existsSync(currentImage)) {
+      fs.unlinkSync(currentImage);
+    }
 
     await result.remove();
     res.status(StatusCodes.OK).json({ data: result });
