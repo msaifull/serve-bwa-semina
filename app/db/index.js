@@ -1,8 +1,10 @@
-const mongoose = require('mongoose');
-const { urlDb } = require('../config');
+const mongoose = require("mongoose");
+const { urlDb } = require("../config");
 
-mongoose.connect(urlDb)
+console.log(urlDb);
+
+mongoose.connect(urlDb);
 
 const db = mongoose.connection;
 
-module.exports =  db;
+module.exports = db;

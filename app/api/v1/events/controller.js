@@ -162,6 +162,9 @@ const updateEvent = async (req, res, next) => {
     }
 
     let result = await Event.findOne({ _id: eventId });
+    if (!result) {
+      throw new CustomAPI.NotFoundError("No Event with id :" + eventId);
+    }
 
     if (!req.file) {
       result.title = title;
@@ -175,7 +178,6 @@ const updateEvent = async (req, res, next) => {
       result.speaker = speaker;
       result.user = user;
       result.status = status;
-      result.stock = stock;
     } else {
       let currentImage = `${config.rootPath}/public/uploads/${result.cover}`;
 
@@ -193,8 +195,8 @@ const updateEvent = async (req, res, next) => {
       result.speaker = speaker;
       result.user = user;
       result.cover = req.file.filename;
-      result.status = status;
       result.stock = stock;
+      result.status = status;
     }
 
     await result.save();

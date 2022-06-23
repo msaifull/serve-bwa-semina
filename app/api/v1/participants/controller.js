@@ -61,7 +61,6 @@ const landingPage = async (req, res, next) => {
       .select("_id title date price category venueName cover")
       .populate({ path: "category", select: "_id name" })
       .limit(4);
-
     res.status(StatusCodes.OK).json({ data: result });
   } catch (err) {
     next(err);
@@ -169,6 +168,16 @@ const dashboard = async (req, res, next) => {
   }
 };
 
+const payments = async (req, res, next) => {
+  try {
+    const result = await Payment.find({ status: true });
+
+    res.status(StatusCodes.OK).json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   signup,
   signin,
@@ -176,4 +185,5 @@ module.exports = {
   detailPage,
   checkout,
   dashboard,
+  payments,
 };
